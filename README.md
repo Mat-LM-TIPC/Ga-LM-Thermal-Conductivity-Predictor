@@ -1,10 +1,10 @@
 # Thermal conductivity prediction for Ga-based liquid-metal alloys
 
-This repository provides the prediction implementation accompanying our study of **thermal conductivity in Ga-based liquid-metal alloys using interpretable machine learning**. It implements the final SISSO analytical composition model and its conditional temperature extension for Ga–In and Ga–In–Sn. Researchers can calculate individual compositions or process large composition tables for high-throughput exploration. Ga–Sn predictions use the 298 K composition model.
+This repository provides the source code of the **thermal-conductivity prediction model for Ga-based liquid-metal alloys** developed in our study. It implements the final SISSO analytical composition model and its conditional temperature extension for Ga–In and Ga–In–Sn. Researchers can calculate individual compositions or process large composition tables for high-throughput exploration. Ga–Sn predictions use the 298 K composition model.
 
 [中文说明](README_zh.md)
 
-## Environment and model configuration
+## Environment and repository contents
 
 ### Local setup
 
@@ -22,31 +22,18 @@ conda create -n ga-lm-predict python=3.11
 conda activate ga-lm-predict
 ```
 
-### Modeling environment
+### Repository contents
 
-The SISSO numerical reproduction and configuration comparison used the recorded environment below. These modeling packages are separate from the predictor's runtime requirements.
-
-| Component | Version / setting |
+| File | Purpose |
 |---|---|
-| Python / TorchSisso | 3.11.15 / 0.1.8 |
-| PyTorch | 2.14.1; CPU; configuration comparison: one thread, seed 20261005 |
-| NumPy / pandas | 2.4.6 / 3.0.6 |
-| scikit-learn / SciPy / SymPy | 1.9.1 / 1.17.1 / 1.14.0 |
+| `predict.py` | Final analytical model, mass-to-atomic-fraction conversion, conditional temperature extension, and single-composition or batch prediction |
+| `examples/compositions_298K.csv` | Example compositions at the reference temperature |
+| `examples/compositions_temperature.csv` | Example compositions for the conditional temperature extension |
+| `examples/make_scan.py` | Generate a mass-percent composition grid for batch prediction |
+| `requirements.txt` | Runtime requirement: Python standard library only |
+| `README.md` / `README_zh.md` | English and Chinese usage instructions |
 
-### Core modeling settings
-
-| Stage | Configuration |
-|---|---|
-| Data and features | 44 compositions at 298 K; Ga = 75, 80, 85 and 90 wt%, 11 records per series. Initial inputs: 10 manually defined composition/property features and 132 Magpie statistics |
-| Fold preprocessing | Training-fold median imputation; remove variance ≤10⁻⁵ and later columns with absolute Pearson correlation >0.95; standardize using training mean and population standard deviation |
-| Reference SISSO search | Operators `+`, `-`, `*`, `/`, `pow(2)`; one actual expansion layer (`no_of_operators=2`); `sis_features=6`; two descriptors plus intercept, from backend limit `dimension=3` |
-| Configuration comparison | Two-/three-coordinate composition routes: 1–2 layers; reference, property-derived and combined routes: 1 layer. Budgets 10/20, with additional 40 checks for three-coordinate depth 2 and combined depth 1; 1–3 descriptors, yielding 48 configurations |
-| Evaluation | 44-fold leave-one-out and four Ga-series holdouts; preprocessing, search and fitting repeated within each fold; pooled RMSE, MAE and R² |
-| Final model | Training-only least-squares descriptor fitting; selected equation fitted to all 44 records, transformed back to atomic fractions and simplified using composition closure |
-
-The reference filtering retains the three atomic fractions, melting-temperature deviation, maximum atomic number and maximum covalent radius. The property-derived and combined comparison routes apply variance filtering and scaling while retaining correlated inputs. Expanded candidates are checked for finite values and nonzero variation.
-
-The fixed RF/ANN/GPR replay used Python 3.14.4, scikit-learn 1.8.0 and random state 17 with the six reference inputs. RF uses 500 trees, unrestricted depth and minimum leaf size 1; ANN uses layers (16,8), ReLU/Adam, alpha 0.02, learning rate 0.005 and 5000 iterations; GPR uses Constant×RBF+WhiteKernel, alpha 10⁻⁸, target normalization and five optimizer restarts. GPR and ANN standardize within each training fold. Full feature definitions and search/evaluation settings are described in the study's Methods and Supplementary Methods S1–S3.
+The predictor directly evaluates the final analytical equation. Model development, feature definitions and evaluation are described in the paper and Supplementary Methods S1–S3.
 
 ## How to use the prediction script
 
